@@ -1,6 +1,7 @@
 package com.cincuentazo.controller;
 
 
+
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -10,6 +11,11 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
 
+import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.ToggleGroup;
 
 public class PlayerSelectionController {
 
@@ -44,7 +50,6 @@ public class PlayerSelectionController {
             if (newVal) selectedAIPlayers = 3;
         });
 
-
     }
 
     @FXML
@@ -60,6 +65,7 @@ public class PlayerSelectionController {
         alert.showAndWait();
 
 
+
         // Cambiar a la otra escena (Game.fxml)
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/com/cincuentazo/view/Game.fxml"));
@@ -69,6 +75,7 @@ public class PlayerSelectionController {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
 
     }
 
