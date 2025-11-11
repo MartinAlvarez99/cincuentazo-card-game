@@ -10,7 +10,7 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        Parent root = FXMLLoader.load(getClass().getResource("/com/cincuentazo/view/Game.fxml"));
+        Parent root = FXMLLoader.load(getClass().getResource("/com/cincuentazo/view/PlayerSelectionView.fxml"));
         primaryStage.setTitle("Cincuentazo - Card Game");
         primaryStage.setScene(new Scene(root, 1024, 768));
         primaryStage.setResizable(false); // Ventana fija, no redimensionable
