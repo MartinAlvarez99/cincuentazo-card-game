@@ -43,6 +43,8 @@ public class PlayerSelectionController {
         threeAIPlayers.selectedProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal) selectedAIPlayers = 3;
         });
+
+
     }
 
     @FXML
