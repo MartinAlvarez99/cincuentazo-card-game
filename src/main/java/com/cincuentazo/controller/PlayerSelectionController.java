@@ -1,13 +1,10 @@
 package com.cincuentazo.controller;
 
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.stage.Stage;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.ToggleGroup;
 
 public class PlayerSelectionController {
 
@@ -41,10 +38,12 @@ public class PlayerSelectionController {
         threeAIPlayers.selectedProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal) selectedAIPlayers = 3;
         });
+
+
     }
 
     @FXML
-    private void handleStartGame(ActionEvent event) {
+    private void handleStartGame() {
         // Mostrar confirmación
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Iniciando Juego");
@@ -55,15 +54,8 @@ public class PlayerSelectionController {
                 "- Total: " + (selectedAIPlayers + 1) + " jugadores");
         alert.showAndWait();
 
-        // Cambiar a la otra escena (Game.fxml)
-        try {
-            Parent root = FXMLLoader.load(getClass().getResource("/com/cincuentazo/view/Game.fxml"));
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.show();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        // TODO: Aquí irá la navegación a la pantalla del juego
+        System.out.println("Iniciando juego con " + selectedAIPlayers + " jugadores IA");
     }
 
     public int getSelectedAIPlayers() {
