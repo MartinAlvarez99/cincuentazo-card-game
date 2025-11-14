@@ -5,6 +5,12 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.ToggleGroup;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+import javafx.scene.Node;
 
 public class PlayerSelectionController {
 
@@ -17,16 +23,13 @@ public class PlayerSelectionController {
 
     @FXML
     public void initialize() {
-        // Configurar grupo de radio buttons
         ToggleGroup aiPlayersGroup = new ToggleGroup();
         oneAIPlayer.setToggleGroup(aiPlayersGroup);
         twoAIPlayers.setToggleGroup(aiPlayersGroup);
         threeAIPlayers.setToggleGroup(aiPlayersGroup);
 
-        // Seleccionar por defecto 1 jugador IA
         oneAIPlayer.setSelected(true);
 
-        // Listeners para actualizar la selección
         oneAIPlayer.selectedProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal) selectedAIPlayers = 1;
         });
@@ -38,13 +41,10 @@ public class PlayerSelectionController {
         threeAIPlayers.selectedProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal) selectedAIPlayers = 3;
         });
-
-
     }
 
     @FXML
-    private void handleStartGame() {
-        // Mostrar confirmación
+    private void handleStartGame(ActionEvent event) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Iniciando Juego");
         alert.setHeaderText("Configuración del juego");
@@ -54,8 +54,16 @@ public class PlayerSelectionController {
                 "- Total: " + (selectedAIPlayers + 1) + " jugadores");
         alert.showAndWait();
 
-        // TODO: Aquí irá la navegación a la pantalla del juego
-        System.out.println("Iniciando juego con " + selectedAIPlayers + " jugadores IA");
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com/cincuentazo/view/Game.fxml")); // Ajusta esta ruta si es necesario
+            Parent root = fxmlLoader.load();
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            Scene scene = new Scene(root);
+            stage.setScene(scene);
+            stage.show();
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public int getSelectedAIPlayers() {
