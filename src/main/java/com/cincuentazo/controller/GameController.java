@@ -84,12 +84,8 @@ public class GameController {
         Carta carta = juego.getJugador().getMano().get(cartaSeleccionada);
 
         int valorAs = 0;
-        try {
-            if (carta.getValor().equals("A")) {
-                valorAs = elegirValorAs();
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        if (carta.getValor().equals("A")) {
+            valorAs = elegirValorAs();
         }
 
         boolean ok = juego.jugarCarta(carta, valorAs);
@@ -100,86 +96,34 @@ public class GameController {
         }
 
         mostrarImagen(cartaCentro, carta);
-
         actualizarInterfaz();
+
         if (juego.jugadorPerdio()) {
             mostrarAlertaFinDeJuego("❌ Perdiste, no tienes más jugadas posibles.");
             return;
         }
 
-        cartaSeleccionada = -1;
+
         turno.setText("Turno de los bots...");
+        PauseTransition pause = new PauseTransition(Duration.seconds(1));
+        pause.setOnFinished(e -> jugarBotRecursivo(0));
+        pause.play();
 
-        jugarTurnoBots();
+        cartaSeleccionada = -1;
     }
 
-    private void jugarTurnoBots() {
-
-        List<Bot> botsEliminados = new ArrayList<>();
-
-        for (Bot bot : bots) {
-
-            turno.setText("Turno de: " + bot.getNombre());
-
-            Carta cartaBot = bot.elegirCarta(juego.getMesa().getSuma());
-
-
-
-            if (cartaBot == null) {
-                // bot pierde
-                botsEliminados.add(bot);
-                continue;
-            }
-
-
-            int valorAs = 0;
-            if (cartaBot.getValor().equals("A")) {
-                valorAs = (juego.getMesa().getSuma() + 10 <= 50) ? 10 : 1;
-            }
-
-            bots.removeAll(botsEliminados);
-
-            if (bots.isEmpty()) {
-                mostrarAlertaFinDeJuego("🎉 ¡Felicidades, ganaste! Todos los bots quedaron fuera.");
-                return;
-            }
-
-            juego.jugarCarta(cartaBot, valorAs);
-            mostrarImagen(cartaCentro, cartaBot);
-
-            // animación pequeña
-            try { Thread.sleep(800); } catch (Exception ignored) {}
-
-            actualizarInterfaz();
-        }
-
-        // eliminar los bots que ya no pueden jugar
-        bots.removeAll(botsEliminados);
-
-        // si no quedan bots → gana el jugador
-        if (bots.isEmpty()) {
-            turno.setText("¡Ganaste! No quedan bots en juego.");
-            btnTirar.setDisable(true);
-            return;
-        }
-
-        turno.setText("Tu turno, elige una carta");
-    }
 
 
     private void jugarBotRecursivo(int indexBot) {
 
-        // Si ya jugaron todos → vuelve al jugador
         if (indexBot >= bots.size()) {
             turno.setText("Tu turno, elige una carta");
             return;
         }
 
         Bot bot = bots.get(indexBot);
-
         turno.setText("Turno de: " + bot.getNombre());
 
-        // Esperar 2 segundos ANTES de jugar
         PauseTransition delay = new PauseTransition(Duration.seconds(2));
 
         delay.setOnFinished(event -> {
@@ -187,7 +131,14 @@ public class GameController {
             Carta cartaBot = bot.elegirCarta(juego.getMesa().getSuma());
 
             if (cartaBot == null) {
-                turno.setText(bot.getNombre() + " pierde (no puede jugar)");
+                bots.remove(bot);
+
+                if (bots.isEmpty()) {
+                    mostrarAlertaFinDeJuego("🎉 ¡Felicidades, ganaste! No quedan bots!");
+                    return;
+                }
+
+                jugarBotRecursivo(indexBot); // no incrementa porque un bot se eliminó
                 return;
             }
 
@@ -198,14 +149,9 @@ public class GameController {
 
             juego.jugarCarta(cartaBot, valorAs);
 
-            if (!juego.getMazo().estaVacio()) {
-                bot.agregarCarta(juego.getMazo().sacarCarta());
-            }
-
             mostrarImagen(cartaCentro, cartaBot);
             actualizarInterfaz();
 
-            // Pasar al siguiente bot con delay
             jugarBotRecursivo(indexBot + 1);
         });
 
