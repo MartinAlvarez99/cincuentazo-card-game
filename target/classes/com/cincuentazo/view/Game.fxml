@@ -9,17 +9,26 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane onKeyPressed="#onKeyPressed" prefHeight="768.0" prefWidth="1024.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.cincuentazo.controller.GameController" >
+<AnchorPane onKeyPressed="#onKeyPressed" prefHeight="768.0" prefWidth="1024.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.cincuentazo.controller.GameController">
 
+    <!-- Fondo / tablero -->
     <ImageView fitHeight="768.0" fitWidth="1024.0" preserveRatio="false">
         <Image url="@board.png" />
     </ImageView>
 
-    <!-- Jugador 2 -->
-    <HBox layoutX="105.0" layoutY="80.0" prefHeight="166.0" prefWidth="122.0" style="-fx-background-color: #FFFFFF;" />
+    <!-- Jugador 2 (bot 1) -->
+    <HBox fx:id="botBox1" layoutX="105.0" layoutY="80.0" prefHeight="166.0" prefWidth="122.0">
+        <children>
+            <ImageView fx:id="botBack1" fitHeight="166.0" fitWidth="122.0" pickOnBounds="true" preserveRatio="true">
+                <image>
+                    <Image url="@CardsPNG/parte trasera.png" />
+                </image>
+            </ImageView>
+        </children>
+    </HBox>
 
     <!-- Mano del jugador -->
-    <HBox layoutX="246.0" layoutY="555.0" prefHeight="183.0" prefWidth="531.0" style="-fx-background-color: darkblue;">
+    <HBox layoutX="246.0" layoutY="555.0" prefHeight="183.0" prefWidth="531.0">
         <children>
             <HBox prefHeight="100.0" prefWidth="200.0">
                 <children>
@@ -52,18 +61,34 @@
     </Button>
 
     <!-- Nombres jugadores -->
-    <Label alignment="CENTER" layoutX="74.0" layoutY="31.0" prefHeight="30.0" prefWidth="185.0" style="-fx-background-color: #ffffff;" text="Samuel" />
-    <Label alignment="CENTER" layoutX="419.0" layoutY="31.0" prefHeight="30.0" prefWidth="185.0" style="-fx-background-color: #ffffff;" text="Hodward" />
-    <Label alignment="CENTER" layoutX="765.0" layoutY="31.0" prefHeight="30.0" prefWidth="185.0" style="-fx-background-color: #ffffff;" text="Martin" />
+    <Label fx:id="botName1" alignment="CENTER" layoutX="74.0" layoutY="31.0" prefHeight="30.0" prefWidth="185.0" style="-fx-background-color: #ffffff;" text="Samuel" />
+    <Label fx:id="botName2" alignment="CENTER" layoutX="419.0" layoutY="31.0" prefHeight="30.0" prefWidth="185.0" style="-fx-background-color: #ffffff;" text="Howard" />
+    <Label fx:id="botName3" alignment="CENTER" layoutX="765.0" layoutY="31.0" prefHeight="30.0" prefWidth="185.0" style="-fx-background-color: #ffffff;" text="Martin" />
 
-    <!-- Jugador 3 -->
-    <HBox layoutX="451.0" layoutY="80.0" prefHeight="166.0" prefWidth="122.0" style="-fx-background-color: #FFFFFF;" />
+    <!-- Jugador 3 (bot 2) -->
+    <HBox fx:id="botBox2" layoutX="451.0" layoutY="80.0" prefHeight="166.0" prefWidth="122.0">
+        <children>
+            <ImageView fx:id="botBack2" fitHeight="166.0" fitWidth="122.0" pickOnBounds="true" preserveRatio="true">
+                <image>
+                    <Image url="@CardsPNG/parte trasera.png" />
+                </image>
+            </ImageView>
+        </children>
+    </HBox>
 
-    <!-- Jugador 4 -->
-    <HBox layoutX="796.0" layoutY="80.0" prefHeight="166.0" prefWidth="122.0" style="-fx-background-color: #FFFFFF;" />
+    <!-- Jugador 4 (bot 3) -->
+    <HBox fx:id="botBox3" layoutX="796.0" layoutY="80.0" prefHeight="166.0" prefWidth="122.0">
+        <children>
+            <ImageView fx:id="botBack3" fitHeight="166.0" fitWidth="122.0" pickOnBounds="true" preserveRatio="true">
+                <image>
+                    <Image url="@CardsPNG/parte trasera.png" />
+                </image>
+            </ImageView>
+        </children>
+    </HBox>
 
     <!-- Carta al centro -->
-    <HBox layoutX="573.0" layoutY="301.0" prefHeight="166.0" prefWidth="122.0" style="-fx-background-color: #FFFFFF;">
+    <HBox layoutX="573.0" layoutY="301.0" prefHeight="166.0" prefWidth="122.0">
         <children>
             <ImageView fx:id="cartaCentro" fitHeight="198.0" fitWidth="132.0" pickOnBounds="true" preserveRatio="true" />
         </children>

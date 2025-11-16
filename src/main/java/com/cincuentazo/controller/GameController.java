@@ -12,6 +12,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -35,6 +36,21 @@ public class GameController {
     @FXML private Label turno;
     @FXML private Label seleccion;
 
+    // Nuevo: referencias a las HBox de los bots (las añadimos en Game.fxml)
+    @FXML private HBox botBox1;
+    @FXML private HBox botBox2;
+    @FXML private HBox botBox3;
+
+
+    @FXML private Label botName1;
+    @FXML private Label botName2;
+    @FXML private Label botName3;
+
+    // (Opcional) referencias a los ImageView de la parte trasera si quieres manipularlos desde Java
+    @FXML private ImageView botBack1;
+    @FXML private ImageView botBack2;
+    @FXML private ImageView botBack3;
+
     private Juego juego;
     private List<Bot> bots = new ArrayList<>();
     private int cartaSeleccionada = -1;
@@ -51,13 +67,27 @@ public class GameController {
     }
 
     public void iniciarJuego() {
+
+        if (botBox1 != null) botBox1.setVisible(cantidadBots >= 1);
+        if (botBox1 != null) botBox1.setManaged(cantidadBots >= 1);
+
+        if (botBox2 != null) botBox2.setVisible(cantidadBots >= 2);
+        if (botBox2 != null) botBox2.setManaged(cantidadBots >= 2);
+
+        if (botBox3 != null) botBox3.setVisible(cantidadBots >= 3);
+        if (botBox3 != null) botBox3.setManaged(cantidadBots >= 3);
+
+
+        if (botName1 != null) { botName1.setVisible(cantidadBots >= 1); botName1.setManaged(cantidadBots >= 1); }
+        if (botName2 != null) { botName2.setVisible(cantidadBots >= 2); botName2.setManaged(cantidadBots >= 2); }
+        if (botName3 != null) { botName3.setVisible(cantidadBots >= 3); botName3.setManaged(cantidadBots >= 3); }
+
         juego = new Juego("Jugador 1");
 
         bots.clear();
 
         for (int i = 1; i <= cantidadBots; i++) {
             Bot bot = new Bot("Bot " + i);
-
 
             bot.setMano(new ArrayList<>());
             for (int c = 0; c < 4; c++) {
@@ -102,7 +132,6 @@ public class GameController {
             mostrarAlertaFinDeJuego("❌ Perdiste, no tienes más jugadas posibles.");
             return;
         }
-
 
         turno.setText("Turno de los bots...");
         bloquearJugador();
@@ -200,6 +229,11 @@ public class GameController {
     }
 
     private void mostrarImagen(ImageView imgView, Carta carta) {
+        if (carta == null) {
+            imgView.setImage(null);
+            return;
+        }
+
         String simbolo = carta.getSimbolo();
 
         if(carta.getSimbolo().equals("♠")){
@@ -213,11 +247,10 @@ public class GameController {
         }
 
         try {
-
             String fileName = carta.getValor() + simbolo + ".png";
-            String path = "/com/cincuentazo/CardsPNG/" + fileName;
+            String path = "/com/cincuentazo/view/CardsPNG/" + fileName;
 
-            Image img = new Image(getClass().getResource(path).toString());
+            Image img = new Image(getClass().getResourceAsStream(path));
             imgView.setImage(img);
 
         } catch (Exception e) {
