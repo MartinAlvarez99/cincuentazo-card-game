@@ -4,6 +4,7 @@ import com.cincuentazo.model.Bot;
 import com.cincuentazo.model.Carta;
 import com.cincuentazo.model.Juego;
 import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -16,6 +17,7 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,6 +59,10 @@ public class GameController {
 
     @FXML
     public void initialize() {
+        // mostrar el texto completo si es largo
+        if (turno != null) turno.setWrapText(true);
+        if (seleccion != null) seleccion.setWrapText(true);
+
         turno.setText("Elige una carta");
         btnTirar.setOnAction(e -> tirarCartaSeleccionada());
 
@@ -106,40 +112,84 @@ public class GameController {
     }
 
     private void tirarCartaSeleccionada() {
+        // evitar reentradas rápidas si ya estamos procesando
+        if (btnTirar.isDisable()) {
+            System.out.println("[DEBUG] tirarCartaSeleccionada: botón ya deshabilitado, ignorando.");
+            return;
+        }
+
+        // Primero comprobamos que haya carta seleccionada: si no, no deshabilitamos nada
         if (cartaSeleccionada == -1) {
             turno.setText("Selecciona una carta primero");
             return;
         }
 
-        Carta carta = juego.getJugador().getMano().get(cartaSeleccionada);
+        // Ahora sí, deshabilitamos para procesar la jugada (evita doble-click)
+        btnTirar.setDisable(true);
 
-        int valorAs = 0;
-        if (carta.getValor().equals("A")) {
-            valorAs = elegirValorAs();
+        try {
+            Carta carta = juego.getJugador().getMano().get(cartaSeleccionada);
+
+            int valorAs = 0;
+            if (carta.getValor().equals("A")) {
+                valorAs = elegirValorAs();
+            }
+
+            boolean ok;
+            try {
+                ok = juego.jugarCarta(carta, valorAs);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                turno.setText("Error al jugar la carta (ver consola).");
+                // aseguramos que el jugador pueda volver a interactuar
+                desbloquearJugador();
+                return;
+            }
+
+            if (!ok) {
+                // Jugada inválida: informar, resetear selección y permitir seguir jugando
+                turno.setText("No puedes jugar esa carta (supera 50)");
+                cartaSeleccionada = -1;
+                seleccion.setText("Carta seleccionada: -");
+                actualizarInterfaz();
+
+                System.out.println("[DEBUG] Jugada inválida -> desbloquear controles del jugador");
+                desbloquearJugador();
+                return;
+            }
+
+            // Jugada válida: actualizar centro y mano
+            mostrarImagen(cartaCentro, carta);
+            actualizarInterfaz();
+
+            if (juego.jugadorPerdio()) {
+                mostrarAlertaFinDeJuego("❌ Perdiste, no tienes más jugadas posibles.");
+                // mostrarAlertaFinDeJuego cerrará o reiniciará la vista; no hace falta desbloquear aquí
+                return;
+            }
+
+            // Empezar turno de bots
+            turno.setText("Turno de los bots...");
+            bloquearJugador(); // deshabilitar mientras los bots juegan
+
+            PauseTransition pause = new PauseTransition(Duration.seconds(1));
+            pause.setOnFinished(e -> {
+                try {
+                    jugarBotRecursivo(0);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    System.out.println("[DEBUG] Excepción en flujo de bots -> desbloquear jugador");
+                    Platform.runLater(this::desbloquearJugador);
+                }
+            });
+            pause.play();
+
+            cartaSeleccionada = -1;
+        } finally {
+            // no forzamos la re-habilitación aquí porque:
+            // - si iniciamos el turno de bots el desbloqueo debe ocurrir cuando terminen (desbloquearJugador)
+            // - si hubo error o jugada inválida ya llamamos a desbloquearJugador() en los returns previos
         }
-
-        boolean ok = juego.jugarCarta(carta, valorAs);
-
-        if (!ok) {
-            turno.setText("No puedes jugar esa carta (supera 50)");
-            return;
-        }
-
-        mostrarImagen(cartaCentro, carta);
-        actualizarInterfaz();
-
-        if (juego.jugadorPerdio()) {
-            mostrarAlertaFinDeJuego("❌ Perdiste, no tienes más jugadas posibles.");
-            return;
-        }
-
-        turno.setText("Turno de los bots...");
-        bloquearJugador();
-        PauseTransition pause = new PauseTransition(Duration.seconds(1));
-        pause.setOnFinished(e -> jugarBotRecursivo(0));
-        pause.play();
-
-        cartaSeleccionada = -1;
     }
 
     private void bloquearJugador() {
@@ -176,32 +226,60 @@ public class GameController {
         PauseTransition delay = new PauseTransition(Duration.seconds(2));
 
         delay.setOnFinished(event -> {
+            // proteger todo el flujo del bot
+            try {
+                Platform.runLater(() -> {
+                    try {
+                        Carta cartaBot = bot.elegirCarta(juego.getMesa().getSuma());
 
-            Carta cartaBot = bot.elegirCarta(juego.getMesa().getSuma());
+                        if (cartaBot == null) {
+                            bots.remove(bot);
 
-            if (cartaBot == null) {
-                bots.remove(bot);
+                            if (bots.isEmpty()) {
+                                mostrarAlertaFinDeJuego("🎉 ¡Felicidades, ganaste! No quedan bots!");
+                                return;
+                            }
 
-                if (bots.isEmpty()) {
-                    mostrarAlertaFinDeJuego("🎉 ¡Felicidades, ganaste! No quedan bots!");
-                    return;
-                }
+                            jugarBotRecursivo(indexBot); // no incrementa porque un bot se eliminó
+                            return;
+                        }
 
-                jugarBotRecursivo(indexBot); // no incrementa porque un bot se eliminó
-                return;
+                        int valorAs = 0;
+                        if (cartaBot.getValor().equals("A")) {
+                            valorAs = (juego.getMesa().getSuma() + 10 <= 50) ? 10 : 1;
+                        }
+
+                        boolean jugado;
+                        try {
+                            jugado = juego.jugarCarta(cartaBot, valorAs);
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            // si falla la jugada del bot, seguimos con el siguiente para no bloquear el juego
+                            jugarBotRecursivo(indexBot + 1);
+                            return;
+                        }
+
+                        // Si por alguna razón la carta del bot no se pudo jugar, seguimos con el siguiente
+                        if (!jugado) {
+                            jugarBotRecursivo(indexBot + 1);
+                            return;
+                        }
+
+                        mostrarImagen(cartaCentro, cartaBot);
+                        actualizarInterfaz();
+
+                        jugarBotRecursivo(indexBot + 1);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        // en caso de error, intentar continuar con el siguiente bot
+                        jugarBotRecursivo(indexBot + 1);
+                    }
+                });
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                // intentar continuar de forma segura
+                jugarBotRecursivo(indexBot + 1);
             }
-
-            int valorAs = 0;
-            if (cartaBot.getValor().equals("A")) {
-                valorAs = (juego.getMesa().getSuma() + 10 <= 50) ? 10 : 1;
-            }
-
-            juego.jugarCarta(cartaBot, valorAs);
-
-            mostrarImagen(cartaCentro, cartaBot);
-            actualizarInterfaz();
-
-            jugarBotRecursivo(indexBot + 1);
         });
 
         delay.play();
@@ -250,11 +328,15 @@ public class GameController {
             String fileName = carta.getValor() + simbolo + ".png";
             String path = "/com/cincuentazo/view/CardsPNG/" + fileName;
 
-            Image img = new Image(getClass().getResourceAsStream(path));
+            InputStream is = getClass().getResourceAsStream(path);
+            if (is == null) {
+                throw new IllegalArgumentException("Recurso no encontrado: " + path);
+            }
+            Image img = new Image(is);
             imgView.setImage(img);
 
         } catch (Exception e) {
-            System.out.println("No se encontró la imagen de la carta: " + carta);
+            System.out.println("No se encontró la imagen de la carta: " + carta + " -> " + e.getMessage());
             imgView.setImage(null);
         }
     }
