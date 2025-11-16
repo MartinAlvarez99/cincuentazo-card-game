@@ -195,7 +195,7 @@ public class GameController {
         try {
 
             String fileName = carta.getValor() + simbolo + ".png";
-            String path = "/com/cincuentazo/CardsPNG/" + fileName;
+            String path = "/com/cincuentazo/view/CardsPNG/" + fileName;
 
             Image img = new Image(getClass().getResource(path).toString());
             imgView.setImage(img);
