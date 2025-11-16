@@ -1,11 +1,11 @@
 package com.cincuentazo.model;
 
-public class Card {
+public class Carta {
 
     private String valor;
     private String simbolo;
 
-    public Card(String valor, String simbolo) {
+    public Carta(String valor, String simbolo) {
         this.valor = valor;
         this.simbolo = simbolo;
     }
@@ -16,6 +16,24 @@ public class Card {
 
     public String getSimbolo() {
         return simbolo;
+    }
+
+
+    //Para que funciene en los bots
+    public int getValorBase() {
+        if (valor.equals("J") || valor.equals("Q") || valor.equals("K")) {
+            return -10;
+        }
+
+        if (valor.equals("A")) {
+            return 11;
+        }
+
+        if (valor.equals("9")) {
+            return 0;
+        }
+
+        return Integer.parseInt(valor);
     }
 
     // Calcula el valor de la carta

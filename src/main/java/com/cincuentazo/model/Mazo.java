@@ -6,7 +6,7 @@ import java.util.List;
 
 public class Mazo {
 
-    private List<Card> cartas;
+    private List<Carta> cartas;
 
     public Mazo() {
         cartas = new ArrayList<>();
@@ -18,7 +18,7 @@ public class Mazo {
         // crear todas las cartas del mazo
         for (String s : simbolos) {
             for (String v : valores) {
-                cartas.add(new Card(v, s));
+                cartas.add(new Carta(v, s));
             }
         }
 
@@ -27,7 +27,7 @@ public class Mazo {
     }
 
     // saca una carta del mazo (la primera)
-    public Card sacarCarta() {
+    public Carta sacarCarta() {
         if (!cartas.isEmpty()) {
             return cartas.remove(0);
         }
@@ -50,7 +50,7 @@ public class Mazo {
     }
 
     // por si necesitas acceder a todas las cartas
-    public List<Card> getCartas() {
+    public List<Carta> getCartas() {
         return cartas;
     }
 }
