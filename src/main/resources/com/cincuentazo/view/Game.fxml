@@ -54,16 +54,25 @@
     </HBox>
 
     <!-- Botón TIRAR -->
-    <Button fx:id="btnTirar" layoutX="848.0" layoutY="627.0" mnemonicParsing="false" prefHeight="55.0" prefWidth="121.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 10;" text="TIRAR CARTA">
+    <Button fx:id="btnTirar" layoutX="848.0" layoutY="627.0" mnemonicParsing="false" prefHeight="55.0" prefWidth="121.0" style="-fx-background-color: #ffffff; -fx-background-radius: 10;" text="TIRAR CARTA">
         <font>
             <Font name="System Bold" size="15.0" />
         </font>
     </Button>
 
     <!-- Nombres jugadores -->
-    <Label fx:id="botName1" alignment="CENTER" layoutX="74.0" layoutY="31.0" prefHeight="30.0" prefWidth="185.0" style="-fx-background-color: #ffffff;" text="Samuel" />
-    <Label fx:id="botName2" alignment="CENTER" layoutX="419.0" layoutY="31.0" prefHeight="30.0" prefWidth="185.0" style="-fx-background-color: #ffffff;" text="Howard" />
-    <Label fx:id="botName3" alignment="CENTER" layoutX="765.0" layoutY="31.0" prefHeight="30.0" prefWidth="185.0" style="-fx-background-color: #ffffff;" text="Martin" />
+    <Label fx:id="botName1" alignment="CENTER" layoutX="74.0" layoutY="31.0" prefHeight="30.0" prefWidth="185.0" style="-fx-background-color: #1A2C5B; -fx-background-radius: 20;" text="SAMUEL" textFill="WHITE">
+      <font>
+         <Font name="Calibri Bold" size="21.0" />
+      </font></Label>
+    <Label fx:id="botName2" alignment="CENTER" layoutX="419.0" layoutY="31.0" prefHeight="30.0" prefWidth="185.0" style="-fx-background-color: #1A2C5B; -fx-background-radius: 20;" text="HOWARD" textFill="WHITE">
+      <font>
+         <Font name="Calibri Bold" size="21.0" />
+      </font></Label>
+    <Label fx:id="botName3" alignment="CENTER" layoutX="765.0" layoutY="31.0" prefHeight="30.0" prefWidth="185.0" style="-fx-background-color: #1A2C5B; -fx-background-radius: 20;" text="MARTIN" textFill="WHITE">
+      <font>
+         <Font name="Calibri" size="21.0" />
+      </font></Label>
 
     <!-- Jugador 3 (bot 2) -->
     <HBox fx:id="botBox2" layoutX="451.0" layoutY="80.0" prefHeight="166.0" prefWidth="122.0">
@@ -95,24 +104,33 @@
     </HBox>
 
     <!-- Panel lateral información -->
-    <VBox layoutX="47.0" layoutY="296.0" prefHeight="209.0" prefWidth="310.0" style="-fx-background-color: white;">
+    <VBox layoutX="29.0" layoutY="296.0" prefHeight="209.0" prefWidth="310.0" style="-fx-background-color: #1A2C5B; -fx-background-radius: 5;">
         <children>
 
-            <HBox prefHeight="70.0" prefWidth="310.0">
+            <HBox alignment="CENTER_LEFT" prefHeight="70.0" prefWidth="310.0">
                 <children>
-                    <Label fx:id="turno" prefHeight="18.0" prefWidth="219.0" text="Turno de Jugador:" />
+                    <Label fx:id="turno" prefHeight="18.0" prefWidth="219.0" text="  Turno de Jugador:" textFill="WHITE">
+                  <font>
+                     <Font name="Calibri Bold" size="21.0" />
+                  </font></Label>
                 </children>
             </HBox>
 
-            <HBox prefHeight="134.0" prefWidth="310.0">
+            <HBox alignment="CENTER_LEFT" prefHeight="134.0" prefWidth="310.0">
                 <children>
-                    <Label fx:id="suma" prefHeight="18.0" prefWidth="119.0" text="Suma total:" />
+                    <Label fx:id="suma" prefHeight="43.0" prefWidth="129.0" text="  Suma total:" textFill="WHITE">
+                  <font>
+                     <Font name="Calibri Bold" size="21.0" />
+                  </font></Label>
                 </children>
             </HBox>
 
-            <HBox prefHeight="60.0" prefWidth="310.0">
+            <HBox alignment="CENTER_LEFT" prefHeight="60.0" prefWidth="310.0">
                 <children>
-                    <Label fx:id="seleccion" prefHeight="18.0" prefWidth="190.0" text=" " />
+                    <Label fx:id="seleccion" prefHeight="18.0" prefWidth="190.0" text="  " textFill="WHITE">
+                  <font>
+                     <Font name="Calibri Bold" size="14.0" />
+                  </font></Label>
                 </children>
             </HBox>
 

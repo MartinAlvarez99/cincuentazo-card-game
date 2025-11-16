@@ -38,17 +38,14 @@ public class GameController {
     @FXML private Label turno;
     @FXML private Label seleccion;
 
-    // Nuevo: referencias a las HBox de los bots (las añadimos en Game.fxml)
     @FXML private HBox botBox1;
     @FXML private HBox botBox2;
     @FXML private HBox botBox3;
-
 
     @FXML private Label botName1;
     @FXML private Label botName2;
     @FXML private Label botName3;
 
-    // (Opcional) referencias a los ImageView de la parte trasera si quieres manipularlos desde Java
     @FXML private ImageView botBack1;
     @FXML private ImageView botBack2;
     @FXML private ImageView botBack3;
@@ -59,7 +56,6 @@ public class GameController {
 
     @FXML
     public void initialize() {
-        // mostrar el texto completo si es largo
         if (turno != null) turno.setWrapText(true);
         if (seleccion != null) seleccion.setWrapText(true);
 
@@ -83,7 +79,6 @@ public class GameController {
         if (botBox3 != null) botBox3.setVisible(cantidadBots >= 3);
         if (botBox3 != null) botBox3.setManaged(cantidadBots >= 3);
 
-
         if (botName1 != null) { botName1.setVisible(cantidadBots >= 1); botName1.setManaged(cantidadBots >= 1); }
         if (botName2 != null) { botName2.setVisible(cantidadBots >= 2); botName2.setManaged(cantidadBots >= 2); }
         if (botName3 != null) { botName3.setVisible(cantidadBots >= 3); botName3.setManaged(cantidadBots >= 3); }
@@ -104,6 +99,9 @@ public class GameController {
         }
 
         actualizarInterfaz();
+
+        // Verificar inmediatamente si el jugador ya no puede jugar
+        checkPlayerHasMoves();
     }
 
     private void seleccionarCarta(int index) {
@@ -147,12 +145,19 @@ public class GameController {
             }
 
             if (!ok) {
-                // Jugada inválida: informar, resetear selección y permitir seguir jugando
+                // Jugada inválida: informar, resetear selección y permitir seguir jugando o terminar si no quedan jugadas
                 turno.setText("No puedes jugar esa carta (supera 50)");
                 cartaSeleccionada = -1;
                 seleccion.setText("Carta seleccionada: -");
                 actualizarInterfaz();
 
+                // Si no quedan cartas jugables → fin de juego
+                if (juego.getJugador().cartasJugables(juego.getMesa().getSuma()).isEmpty()) {
+                    mostrarAlertaFinDeJuego("❌ Perdiste, no tienes más jugadas posibles.");
+                    return;
+                }
+
+                // Si sí hay otras jugadas posibles, re-habilitamos controles para que intente otra carta
                 System.out.println("[DEBUG] Jugada inválida -> desbloquear controles del jugador");
                 desbloquearJugador();
                 return;
@@ -163,8 +168,8 @@ public class GameController {
             actualizarInterfaz();
 
             if (juego.jugadorPerdio()) {
+                // Juego detectó que el jugador ya no tiene jugadas -> terminar
                 mostrarAlertaFinDeJuego("❌ Perdiste, no tienes más jugadas posibles.");
-                // mostrarAlertaFinDeJuego cerrará o reiniciará la vista; no hace falta desbloquear aquí
                 return;
             }
 
@@ -210,13 +215,25 @@ public class GameController {
         carta4.setDisable(false);
     }
 
-
+    /**
+     * Comprueba si el jugador tiene al menos una carta jugable en la suma actual.
+     * Si no tiene, muestra el diálogo de fin de juego.
+     */
+    private void checkPlayerHasMoves() {
+        if (juego == null) return;
+        boolean noHay = juego.getJugador().cartasJugables(juego.getMesa().getSuma()).isEmpty();
+        if (noHay) {
+            mostrarAlertaFinDeJuego("❌ Perdiste, no tienes más jugadas posibles.");
+        }
+    }
 
     private void jugarBotRecursivo(int indexBot) {
 
         if (indexBot >= bots.size()) {
             turno.setText("Tu turno, elige una carta");
             desbloquearJugador();
+            // Después de devolver el turno, comprobamos si el jugador tiene jugadas
+            checkPlayerHasMoves();
             return;
         }
 
@@ -431,25 +448,27 @@ public class GameController {
     }
 
     private void mostrarAlertaFinDeJuego(String mensaje) {
+        // Ejecutamos en la siguiente iteración del loop de eventos para evitar errores durante animaciones/layouts
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Fin del Juego");
+            alert.setHeaderText(mensaje);
+            alert.setContentText("¿Qué deseas hacer?");
 
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Fin del Juego");
-        alert.setHeaderText(mensaje);
-        alert.setContentText("¿Qué deseas hacer?");
+            ButtonType btnReiniciar = new ButtonType("Reiniciar");
+            ButtonType btnCerrar = new ButtonType("Cerrar");
 
-        ButtonType btnReiniciar = new ButtonType("Reiniciar");
-        ButtonType btnCerrar = new ButtonType("Cerrar");
+            alert.getButtonTypes().setAll(btnReiniciar, btnCerrar);
 
-        alert.getButtonTypes().setAll(btnReiniciar, btnCerrar);
-
-        alert.showAndWait().ifPresent(respuesta -> {
-            if (respuesta == btnReiniciar) {
-                reiniciarJuego();
-            } else {
-                // cerrar ventana
-                Stage stage = (Stage) btnTirar.getScene().getWindow();
-                stage.close();
-            }
+            alert.showAndWait().ifPresent(respuesta -> {
+                if (respuesta == btnReiniciar) {
+                    reiniciarJuego();
+                } else {
+                    // cerrar ventana
+                    Stage stage = (Stage) btnTirar.getScene().getWindow();
+                    stage.close();
+                }
+            });
         });
     }
 }
