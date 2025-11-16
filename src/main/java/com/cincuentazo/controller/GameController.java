@@ -134,11 +134,30 @@ public class GameController {
         }
 
         turno.setText("Turno de los bots...");
+        bloquearJugador();
         PauseTransition pause = new PauseTransition(Duration.seconds(1));
         pause.setOnFinished(e -> jugarBotRecursivo(0));
         pause.play();
 
         cartaSeleccionada = -1;
+    }
+
+    private void bloquearJugador() {
+        btnTirar.setDisable(true);
+
+        carta1.setDisable(true);
+        carta2.setDisable(true);
+        carta3.setDisable(true);
+        carta4.setDisable(true);
+    }
+
+    private void desbloquearJugador() {
+        btnTirar.setDisable(false);
+
+        carta1.setDisable(false);
+        carta2.setDisable(false);
+        carta3.setDisable(false);
+        carta4.setDisable(false);
     }
 
 
@@ -147,6 +166,7 @@ public class GameController {
 
         if (indexBot >= bots.size()) {
             turno.setText("Tu turno, elige una carta");
+            desbloquearJugador();
             return;
         }
 
@@ -241,6 +261,7 @@ public class GameController {
 
     @FXML
     private void onKeyPressed(KeyEvent event) {
+        if (btnTirar.isDisable()) return;
         switch (event.getCode()) {
             case DIGIT1:
                 seleccionarCarta(0);
