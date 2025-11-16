@@ -5,7 +5,7 @@ import java.util.List;
 
 public class Mesa {
 
-    private List<Card> cartas;
+    private List<Carta> cartas;
     private int suma;
 
     public Mesa() {
@@ -13,7 +13,7 @@ public class Mesa {
         suma = 0;
     }
 
-    public void ponerCarta(Card c, int valorCarta) {
+    public void ponerCarta(Carta c, int valorCarta) {
         cartas.add(c);
         suma += valorCarta;
     }
@@ -22,7 +22,7 @@ public class Mesa {
         return suma;
     }
 
-    public Card ultimaCarta() {
+    public Carta ultimaCarta() {
         if (cartas.isEmpty()) return null;
         return cartas.get(cartas.size() - 1);
     }

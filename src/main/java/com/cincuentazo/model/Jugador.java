@@ -3,25 +3,25 @@ package com.cincuentazo.model;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Player {
+public class Jugador {
 
     private String nombre;
-    private List<Card> mano;
+    private List<Carta> mano;
 
-    public Player(String nombre) {
+    public Jugador(String nombre) {
         this.nombre = nombre;
         this.mano = new ArrayList<>();
     }
 
-    public void agregarCarta(Card c) {
+    public void agregarCarta(Carta c) {
         mano.add(c);
     }
 
-    public void quitarCarta(Card c) {
+    public void quitarCarta(Carta c) {
         mano.remove(c);
     }
 
-    public List<Card> getMano() {
+    public List<Carta> getMano() {
         return mano;
     }
 
@@ -31,9 +31,9 @@ public class Player {
 
     // Devuelve las cartas que se pueden jugar sin pasar de 50
 
-    public List<Card> cartasJugables(int sumaMesa) {
-        List<Card> jugables = new ArrayList<>();
-        for (Card c : mano) {
+    public List<Carta> cartasJugables(int sumaMesa) {
+        List<Carta> jugables = new ArrayList<>();
+        for (Carta c : mano) {
             int valor = 0;
             if (c.getValor().equals("A")) {
                 // el As puede valer 1 o 10, se revisan los dos casos

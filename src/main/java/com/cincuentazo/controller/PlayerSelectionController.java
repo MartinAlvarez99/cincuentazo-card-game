@@ -45,26 +45,23 @@ public class PlayerSelectionController {
 
     @FXML
     private void handleStartGame(ActionEvent event) {
-        // Mostrar confirmación
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Iniciando Juego");
-        alert.setHeaderText("Configuración del juego");
-        alert.setContentText("El juego iniciará con:\n" +
-                "- 1 jugador humano\n" +
-                "- " + selectedAIPlayers + " jugadores IA\n" +
-                "- Total: " + (selectedAIPlayers + 1) + " jugadores");
-        alert.showAndWait();
-
-        // Cambiar a la otra escena (Game.fxml)
         try {
-            Parent root = FXMLLoader.load(getClass().getResource("/com/cincuentazo/view/Game.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/cincuentazo/view/Game.fxml"));
+            Parent root = loader.load();
+
+            GameController controller = loader.getController();
+            controller.setCantidadBots(selectedAIPlayers);
+            controller.iniciarJuego();
+
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(new Scene(root));
             stage.show();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
 
     public int getSelectedAIPlayers() {
         return selectedAIPlayers;
