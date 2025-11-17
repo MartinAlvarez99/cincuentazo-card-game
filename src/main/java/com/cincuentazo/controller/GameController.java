@@ -21,19 +21,46 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+
+/**
+ * Controlador de la vista principal de la partida (Game.fxml).
+ *
+ * <p>Gestiona la interfaz de usuario (mostrar cartas, actualizar suma, mensajes de turno),
+ * procesa la interacción del jugador (seleccionar y tirar cartas) y coordina los turnos
+ * de los bots (IA) mediante pausas y ejecución segura en el hilo de JavaFX.</p>
+ *
+ * <p>Protege contra reentradas (doble-click) y errores durante el flujo de juego,
+ * usando bloqueo/desbloqueo de controles y Platform.runLater cuando es necesario.</p>
+ *
+ * @author Martin Alvarez, Samuel Vargas, Howard Sanchez
+ */
 public class GameController {
 
+    /** Cantidad de bots seleccionada en la pantalla inicial. */
     private int cantidadBots = 0;
+
+    /**
+     * Establece cuántos bots debe cargar la partida.
+     * Es llamado desde el controlador PlayerSelectionController.
+     *
+     * @param cantidad número de bots (1–3)
+     */
     public void setCantidadBots(int cantidad) {
         this.cantidadBots = cantidad;
     }
 
+    // ----------------------------
+    // Elementos de la interfaz
+    // ----------------------------
+
     @FXML private Button btnTirar;
+
     @FXML private ImageView carta1;
     @FXML private ImageView carta2;
     @FXML private ImageView carta3;
     @FXML private ImageView carta4;
     @FXML private ImageView cartaCentro;
+
     @FXML private Label suma;
     @FXML private Label turno;
     @FXML private Label seleccion;
@@ -50,10 +77,23 @@ public class GameController {
     @FXML private ImageView botBack2;
     @FXML private ImageView botBack3;
 
+    // ----------------------------
+    // Lógica del juego
+    // ----------------------------
+
     private Juego juego;
     private List<Bot> bots = new ArrayList<>();
+
+    /** Índice de la carta seleccionada por el jugador (0–3). */
     private int cartaSeleccionada = -1;
 
+
+    /**
+     * Inicializa la vista una vez cargado el FXML.
+     *
+     * <p>Configura textos iniciales, listeners para clicks en cartas
+     * y asigna la acción del botón "Tirar".</p>
+     */
     @FXML
     public void initialize() {
         if (turno != null) turno.setWrapText(true);
@@ -68,8 +108,16 @@ public class GameController {
         carta4.setOnMouseClicked(evt -> seleccionarCarta(3));
     }
 
+
+    /**
+     * Inicia la partida creando el objeto {@link Juego},
+     * robando cartas iniciales para los bots y mostrando su interfaz.
+     *
+     * <p>También verifica si el jugador ya no tiene jugadas posibles al empezar.</p>
+     */
     public void iniciarJuego() {
 
+        // Mostrar u ocultar secciones según la cantidad de bots
         if (botBox1 != null) botBox1.setVisible(cantidadBots >= 1);
         if (botBox1 != null) botBox1.setManaged(cantidadBots >= 1);
 
@@ -87,6 +135,7 @@ public class GameController {
 
         bots.clear();
 
+        // Asignar 4 cartas iniciales a cada bot
         for (int i = 1; i <= cantidadBots; i++) {
             Bot bot = new Bot("Bot " + i);
 
@@ -99,36 +148,49 @@ public class GameController {
         }
 
         actualizarInterfaz();
-
-        // Verificar inmediatamente si el jugador ya no puede jugar
         checkPlayerHasMoves();
     }
 
+
+    /**
+     * Marca una carta como seleccionada por el jugador.
+     *
+     * @param index índice de la carta (0–3)
+     */
     private void seleccionarCarta(int index) {
         cartaSeleccionada = index;
         seleccion.setText("Carta seleccionada: " + (index + 1));
     }
 
+
+    /**
+     * Lógica principal cuando el jugador presiona el botón "Tirar".
+     *
+     * <p>Valida la carta, bloquea los controles para evitar doble click,
+     * actualiza el juego, muestra la carta en pantalla y da paso al turno de los bots.</p>
+     */
     private void tirarCartaSeleccionada() {
-        // evitar reentradas rápidas si ya estamos procesando
+
+        // Evitar doble-click rápido
         if (btnTirar.isDisable()) {
             System.out.println("[DEBUG] tirarCartaSeleccionada: botón ya deshabilitado, ignorando.");
             return;
         }
 
-        // Primero comprobamos que haya carta seleccionada: si no, no deshabilitamos nada
+        // Si no seleccionó carta, no bloquear nada
         if (cartaSeleccionada == -1) {
             turno.setText("Selecciona una carta primero");
             return;
         }
 
-        // Ahora sí, deshabilitamos para procesar la jugada (evita doble-click)
         btnTirar.setDisable(true);
 
         try {
             Carta carta = juego.getJugador().getMano().get(cartaSeleccionada);
 
             int valorAs = 0;
+
+            // Si es un As, pedir valor al usuario
             if (carta.getValor().equals("A")) {
                 valorAs = elegirValorAs();
             }
@@ -139,43 +201,37 @@ public class GameController {
             } catch (Exception ex) {
                 ex.printStackTrace();
                 turno.setText("Error al jugar la carta (ver consola).");
-                // aseguramos que el jugador pueda volver a interactuar
                 desbloquearJugador();
                 return;
             }
 
             if (!ok) {
-                // Jugada inválida: informar, resetear selección y permitir seguir jugando o terminar si no quedan jugadas
                 turno.setText("No puedes jugar esa carta (supera 50)");
                 cartaSeleccionada = -1;
                 seleccion.setText("Carta seleccionada: -");
                 actualizarInterfaz();
 
-                // Si no quedan cartas jugables → fin de juego
                 if (juego.getJugador().cartasJugables(juego.getMesa().getSuma()).isEmpty()) {
                     mostrarAlertaFinDeJuego("❌ Perdiste, no tienes más jugadas posibles.");
                     return;
                 }
 
-                // Si sí hay otras jugadas posibles, re-habilitamos controles para que intente otra carta
-                System.out.println("[DEBUG] Jugada inválida -> desbloquear controles del jugador");
                 desbloquearJugador();
                 return;
             }
 
-            // Jugada válida: actualizar centro y mano
+            // Jugada válida → actualizar
             mostrarImagen(cartaCentro, carta);
             actualizarInterfaz();
 
             if (juego.jugadorPerdio()) {
-                // Juego detectó que el jugador ya no tiene jugadas -> terminar
                 mostrarAlertaFinDeJuego("❌ Perdiste, no tienes más jugadas posibles.");
                 return;
             }
 
-            // Empezar turno de bots
+            // Turno de bots
             turno.setText("Turno de los bots...");
-            bloquearJugador(); // deshabilitar mientras los bots juegan
+            bloquearJugador();
 
             PauseTransition pause = new PauseTransition(Duration.seconds(1));
             pause.setOnFinished(e -> {
@@ -183,41 +239,41 @@ public class GameController {
                     jugarBotRecursivo(0);
                 } catch (Exception ex) {
                     ex.printStackTrace();
-                    System.out.println("[DEBUG] Excepción en flujo de bots -> desbloquear jugador");
                     Platform.runLater(this::desbloquearJugador);
                 }
             });
             pause.play();
 
             cartaSeleccionada = -1;
-        } finally {
-            // no forzamos la re-habilitación aquí porque:
-            // - si iniciamos el turno de bots el desbloqueo debe ocurrir cuando terminen (desbloquearJugador)
-            // - si hubo error o jugada inválida ya llamamos a desbloquearJugador() en los returns previos
+        }
+        finally {
+            // El desbloqueo ocurre en los lugares correctos dentro del flujo
         }
     }
 
+
+    /** Deshabilita todas las interacciones del jugador. */
     private void bloquearJugador() {
         btnTirar.setDisable(true);
-
         carta1.setDisable(true);
         carta2.setDisable(true);
         carta3.setDisable(true);
         carta4.setDisable(true);
     }
 
+    /** Vuelve a habilitar las interacciones del jugador. */
     private void desbloquearJugador() {
         btnTirar.setDisable(false);
-
         carta1.setDisable(false);
         carta2.setDisable(false);
         carta3.setDisable(false);
         carta4.setDisable(false);
     }
 
+
     /**
-     * Comprueba si el jugador tiene al menos una carta jugable en la suma actual.
-     * Si no tiene, muestra el diálogo de fin de juego.
+     * Verifica si el jugador tiene al menos una carta jugable.
+     * Si no, termina la partida.
      */
     private void checkPlayerHasMoves() {
         if (juego == null) return;
@@ -227,12 +283,18 @@ public class GameController {
         }
     }
 
+
+    /**
+     * Controla recursivamente el turno de los bots.
+     *
+     * @param indexBot índice del bot actual en la lista
+     */
     private void jugarBotRecursivo(int indexBot) {
 
+        // Si todos los bots jugaron → vuelve el turno al jugador
         if (indexBot >= bots.size()) {
             turno.setText("Tu turno, elige una carta");
             desbloquearJugador();
-            // Después de devolver el turno, comprobamos si el jugador tiene jugadas
             checkPlayerHasMoves();
             return;
         }
@@ -243,12 +305,13 @@ public class GameController {
         PauseTransition delay = new PauseTransition(Duration.seconds(2));
 
         delay.setOnFinished(event -> {
-            // proteger todo el flujo del bot
             try {
                 Platform.runLater(() -> {
                     try {
+
                         Carta cartaBot = bot.elegirCarta(juego.getMesa().getSuma());
 
+                        // Si el bot no puede jugar ninguna carta, se elimina
                         if (cartaBot == null) {
                             bots.remove(bot);
 
@@ -257,26 +320,26 @@ public class GameController {
                                 return;
                             }
 
-                            jugarBotRecursivo(indexBot); // no incrementa porque un bot se eliminó
+                            jugarBotRecursivo(indexBot);
                             return;
                         }
 
+                        // Elegir valor del As para bot según convenga
                         int valorAs = 0;
                         if (cartaBot.getValor().equals("A")) {
                             valorAs = (juego.getMesa().getSuma() + 10 <= 50) ? 10 : 1;
                         }
 
+                        // Intentar jugar
                         boolean jugado;
                         try {
                             jugado = juego.jugarCarta(cartaBot, valorAs);
                         } catch (Exception ex) {
                             ex.printStackTrace();
-                            // si falla la jugada del bot, seguimos con el siguiente para no bloquear el juego
                             jugarBotRecursivo(indexBot + 1);
                             return;
                         }
 
-                        // Si por alguna razón la carta del bot no se pudo jugar, seguimos con el siguiente
                         if (!jugado) {
                             jugarBotRecursivo(indexBot + 1);
                             return;
@@ -288,13 +351,11 @@ public class GameController {
                         jugarBotRecursivo(indexBot + 1);
                     } catch (Exception ex) {
                         ex.printStackTrace();
-                        // en caso de error, intentar continuar con el siguiente bot
                         jugarBotRecursivo(indexBot + 1);
                     }
                 });
             } catch (Exception ex) {
                 ex.printStackTrace();
-                // intentar continuar de forma segura
                 jugarBotRecursivo(indexBot + 1);
             }
         });
@@ -303,6 +364,13 @@ public class GameController {
     }
 
 
+    /**
+     * Actualiza la interfaz del jugador:
+     * <ul>
+     *     <li>Actualiza la suma en pantalla</li>
+     *     <li>Muestra las cartas del jugador</li>
+     * </ul>
+     */
     private void actualizarInterfaz() {
 
         suma.setText("Suma: " + juego.getMesa().getSuma());
@@ -313,6 +381,13 @@ public class GameController {
         mostrarCartaJugador(3, carta4);
     }
 
+
+    /**
+     * Muestra una carta en uno de los slots del jugador.
+     *
+     * @param index índice de carta (0–3)
+     * @param imgView vista donde cargar la imagen
+     */
     private void mostrarCartaJugador(int index, ImageView imgView) {
         if (index >= juego.getJugador().getMano().size()) {
             imgView.setImage(null);
@@ -323,6 +398,13 @@ public class GameController {
         mostrarImagen(imgView, c);
     }
 
+
+    /**
+     * Carga la imagen correspondiente a una carta en un ImageView.
+     *
+     * @param imgView ImageView destino
+     * @param carta carta a mostrar
+     */
     private void mostrarImagen(ImageView imgView, Carta carta) {
         if (carta == null) {
             imgView.setImage(null);
@@ -331,13 +413,14 @@ public class GameController {
 
         String simbolo = carta.getSimbolo();
 
+        // Convertir símbolo a nombre de archivo
         if(carta.getSimbolo().equals("♠")){
             simbolo = " de picas";
         } else if(carta.getSimbolo().equals("♥")){
             simbolo = " de corazones";
-        }else if(carta.getSimbolo().equals("♦")){
+        } else if(carta.getSimbolo().equals("♦")){
             simbolo = " de diamantes";
-        }else if(carta.getSimbolo().equals("♣")){
+        } else if(carta.getSimbolo().equals("♣")){
             simbolo = " de treboles";
         }
 
@@ -358,37 +441,39 @@ public class GameController {
         }
     }
 
+
+    /**
+     * Control del teclado:
+     * <ul>
+     *     <li>1–4: seleccionar carta</li>
+     *     <li>Enter: tirar</li>
+     * </ul>
+     *
+     * @param event evento KeyEvent capturado desde el FXML
+     */
     @FXML
     private void onKeyPressed(KeyEvent event) {
         if (btnTirar.isDisable()) return;
+
         switch (event.getCode()) {
-            case DIGIT1:
-                seleccionarCarta(0);
-                break;
-
-            case DIGIT2:
-                seleccionarCarta(1);
-                break;
-
-            case DIGIT3:
-                seleccionarCarta(2);
-                break;
-
-            case DIGIT4:
-                seleccionarCarta(3);
-                break;
-
-            case ENTER:
-                tirarCartaSeleccionada();
-                break;
+            case DIGIT1: seleccionarCarta(0); break;
+            case DIGIT2: seleccionarCarta(1); break;
+            case DIGIT3: seleccionarCarta(2); break;
+            case DIGIT4: seleccionarCarta(3); break;
+            case ENTER:  tirarCartaSeleccionada(); break;
         }
     }
 
+
+    /**
+     * Muestra un diálogo para elegir si el As vale 1 o 10.
+     *
+     * @return valor del As elegido
+     */
     private int elegirValorAs() {
         Dialog<Integer> dialog = new Dialog<>();
         dialog.setTitle("Elegir valor del AS");
 
-        // Fondo oscuro
         dialog.getDialogPane().setStyle(
                 "-fx-background-color: #1e1e1e;" +
                         "-fx-border-color: #3a3a3a;" +
@@ -402,13 +487,11 @@ public class GameController {
                         "-fx-text-fill: white;"
         );
 
-        // Botones personalizados
         ButtonType btn1 = new ButtonType("Valor 1");
         ButtonType btn10 = new ButtonType("Valor 10");
 
         dialog.getDialogPane().getButtonTypes().addAll(btn1, btn10);
 
-        // Personalizar botones (redondeados y oscuros)
         dialog.getDialogPane().lookupButton(btn1).setStyle(
                 "-fx-background-color: #2b2b2b;" +
                         "-fx-text-fill: white;" +
@@ -423,7 +506,6 @@ public class GameController {
                         "-fx-font-size: 14px;"
         );
 
-        // Contenido
         Label content = new Label("¿Cuánto valdrá el As?");
         content.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
         dialog.getDialogPane().setContent(content);
@@ -436,6 +518,10 @@ public class GameController {
         return dialog.showAndWait().orElse(1);
     }
 
+
+    /**
+     * Reinicia el juego retornando a la pantalla de selección de jugadores.
+     */
     private void reiniciarJuego() {
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/com/cincuentazo/view/PlayerSelectionView.fxml"));
@@ -447,8 +533,14 @@ public class GameController {
         }
     }
 
+
+    /**
+     * Muestra un diálogo de fin de juego, con opción para reiniciar o cerrar.
+     *
+     * @param mensaje mensaje principal a mostrar
+     */
     private void mostrarAlertaFinDeJuego(String mensaje) {
-        // Ejecutamos en la siguiente iteración del loop de eventos para evitar errores durante animaciones/layouts
+
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             alert.setTitle("Fin del Juego");
@@ -464,7 +556,6 @@ public class GameController {
                 if (respuesta == btnReiniciar) {
                     reiniciarJuego();
                 } else {
-                    // cerrar ventana
                     Stage stage = (Stage) btnTirar.getScene().getWindow();
                     stage.close();
                 }
